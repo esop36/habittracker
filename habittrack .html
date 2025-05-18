@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>21 Day Habit Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- Base & Early iOS Styles --- */
+        :root {
+            --ios-blue: #007aff;
+            --ios-green: #34c759;
+            --ios-red: #ff3b30;
+            --ios-orange: #ff9500;
+            --ios-yellow: #ffcc00;
+            --ios-teal: #5ac8fa; /* Was #5856D6, changed to a lighter blue for Cold Shower */
+            --ios-cyan: #34C7F8; /* For Floss */
+            --ios-purple: #af52de;
+            --ios-gray-light: #f0f0f0;
+            --ios-gray-medium: #d1d5db;
+            --ios-gray-dark: #8e8e93;
+            --ios-separator: #c8c7cc;
+            --ios-header-bg-start: #f7f7f7;
+            --ios-header-bg-end: #e0e0e0;
+            --ios-text-color: #000000;
+            --ios-text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #c7c7c7; /* Pinstripe-friendly base */
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAIElEQVQIW2NkwAT/GdHE/gP5ec4hBlYEMWENUIYAJS8BAEZ8ARs42Hl8AAAAAElFTkSuQmCC'); /* Pinstripe background */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--ios-text-color);
+            -webkit-user-select: none; /* Disable text selection for app-like feel */
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        #app-shell {
+            width: 100%;
+            max-width: 420px; /* Slightly wider for comfort */
+            min-height: 100vh;
+            background-color: var(--ios-gray-light);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            overflow: hidden; /* Important for fixed footer */
+            position: relative;
+        }
+
+        .app-header {
+            background-image: linear-gradient(to bottom, var(--ios-header-bg-start), var(--ios-header-bg-end));
+            border-bottom: 1px solid #b2b2b2;
+            padding: 10px 15px;
+            text-align: center;
+            font-size: 17px; /* iOS title size */
+            font-weight: bold;
+            color: var(--ios-text-color);
+            text-shadow: var(--ios-text-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .app-content {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            padding-bottom: 70px; /* Space for nav bar */
+        }
+
+        /* --- Views --- */
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* --- iOS Styled Controls --- */
+        .ios-button {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 8px; /* Standard iOS rounded corners */
+            font-size: 17px;
+            font-weight: 500;
+            text-align: center;
+            color: white;
+            background-image: linear-gradient(to bottom, #007aff 0%, #006ee6 100%);
+            border: 1px solid #005bb5;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2);
+            text-shadow: 0 -1px 0 rgba(0,0,0,0.2);
+            cursor: pointer;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .ios-button:hover { background-image: linear-gradient(to bottom, #006ee6 0%, #005bb5 100%); }
+        .ios-button:active {
+            background-image: linear-gradient(to bottom, #005bb5 0%, #004c99 100%);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+        }
+        .ios-button.red {
+            background-image: linear-gradient(to bottom, var(--ios-red) 0%, #d9352b 100%);
+            border-color: #c02e25;
+        }
+         .ios-button.green {
+            background-image: linear-gradient(to bottom, var(--ios-green) 0%, #2ba84a 100%);
+            border-color: #248c3f;
+        }
+
+        .ios-input, .ios-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #b0b0b0;
+            border-radius: 7px;
+            background-color: #fff;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+            font-size: 16px;
+            margin-bottom: 10px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            box-sizing: border-box;
+        }
+        .ios-select {
+             background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23c7c7cc%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px;
+            padding-right: 35px;
+        }
+
+        .ios-list-group {
+            background-color: #fff;
+            border: 1px solid var(--ios-separator);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .ios-list-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--ios-separator);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+        }
+        .ios-list-item:last-child { border-bottom: none; }
+        .ios-list-item .icon { font-size: 1.5em; margin-right: 10px; }
+        .ios-list-item .details { flex-grow: 1; }
+        .ios-list-item .name { font-weight: 500; }
+        .ios-list-item .progress-text { font-size: 0.8em; color: var(--ios-gray-dark); }
+
+        /* --- Navigation Bar --- */
+        .nav-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-image: linear-gradient(to bottom, #fafafa, #e0e0e0);
+            border-top: 1px solid #b2b2b2;
+            padding: 5px 0;
+            height: 50px; /* Standard iOS tab bar height */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 420px; /* Match app-shell */
+            margin: 0 auto; /* Center if app-shell is narrower than viewport */
+            z-index: 100;
+        }
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 5px 0;
+            font-size: 10px;
+            color: var(--ios-gray-dark);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-item.active { color: var(--ios-blue); }
+        .nav-item .icon { font-size: 20px; margin-bottom: 2px; } /* Emojis or SVGs here */
+
+        /* --- Daily Check-in View --- */
+        #daily-view-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            justify-items: center;
+        }
+        .daily-habit-button {
+            width: 100%;
+            aspect-ratio: 1 / 1; /* Square buttons */
+            border-radius: 12px;
+            background-color: #fff;
+            border: 2px solid var(--ios-separator);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+        .daily-habit-button .icon { font-size: 2.5em; /* Larger emoji */ }
+        .daily-habit-button .name { font-size: 0.8em; margin-top: 5px; color: var(--ios-gray-dark); }
+        .daily-habit-button.checked {
+            border-width: 3px;
+            box-shadow: 0 0 10px var(--habit-color), inset 0 0 15px rgba(255,255,255,0.3);
+        }
+        .daily-habit-button.checked::before { /* Fill effect */
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--habit-color);
+            opacity: 0.8;
+            z-index: -1;
+        }
+        .daily-habit-button.checked .icon, .daily-habit-button.checked .name {
+            color: white;
+            text-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+
+
+        /* --- Setup View --- */
+        .setup-habit-slot {
+            background-color: #fff;
+            border: 1px solid var(--ios-separator);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .setup-habit-slot label { display: block; margin-bottom: 5px; font-weight: 500; }
+
+        /* --- Trophy Room --- */
+        .trophy-item {
+            background-image: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+            border: 1px solid #c0c0c0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+        }
+        .trophy-item .icon { font-size: 2em; margin-right: 15px; }
+        .trophy-item .name { font-size: 1.1em; font-weight: bold; color: #333; }
+        .trophy-item .date { font-size: 0.8em; color: var(--ios-gray-dark); }
+
+        /* --- Celebration Animation --- */
+        #celebration-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.1);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            pointer-events: none; /* Allow clicks through */
+        }
+        .confetti {
+            width: 10px; height: 20px;
+            background-color: var(--ios-blue);
+            position: absolute;
+            opacity: 0;
+            animation: confetti-fall 3s ease-out forwards;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .message-box {
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            position: fixed;
+            bottom: 70px; /* Above nav bar */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+        .message-box.show { opacity: 1; }
+
+        h2.view-title {
+            font-size: 1.2em;
+            color: var(--ios-gray-dark);
+            text-align: center;
+            margin-bottom: 15px;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+        }
+
+    </style>
+</head>
+<body>
+    <div id="app-shell">
+        <header class="app-header" id="app-title">Daily Habits</header>
+
+        <main class="app-content">
+            <div id="setup-view" class="view">
+                <h2 class="view-title">Setup Your Habits</h2>
+                <p style="text-align: center; color: var(--ios-gray-dark); margin-bottom:15px;">Choose up to 5 habits to build over 21 days.</p>
+                <div id="setup-form">
+                    </div>
+                <button id="save-setup-button" class="ios-button green">Start Tracking!</button>
+            </div>
+
+            <div id="daily-view" class="view">
+                <div id="daily-view-content"></div>
+                <p id="all-habits-done-message" style="text-align:center; margin-top:20px; color:var(--ios-green); font-weight:bold; display:none;">
+                    🎉 All habits done for today! Great job! 🎉
+                </p>
+            </div>
+
+            <div id="edit-view" class="view">
+                <h2 class="view-title">Edit Habits</h2>
+                <div id="edit-habits-list" class="ios-list-group">
+                    </div>
+                 <p style="font-size:0.8em; color:var(--ios-gray-dark); text-align:center; margin-top:15px;">Changes will apply from the next CET day. Resetting a habit starts its 21-day cycle over.</p>
+            </div>
+
+            <div id="trophy-room-view" class="view">
+                <h2 class="view-title">🏆 Trophy Room 🏆</h2>
+                <div id="completed-habits-list">
+                    </div>
+            </div>
+        </main>
+
+        <nav class="nav-bar">
+            <div class="nav-item active" data-view="daily-view">
+                <span class="icon">🏠</span> <span>Today</span>
+            </div>
+            <div class="nav-item" data-view="edit-view">
+                <span class="icon">✏️</span> <span>Edit</span>
+            </div>
+            <div class="nav-item" data-view="trophy-room-view">
+                <span class="icon">🏆</span> <span>Archive</span>
+            </div>
+        </nav>
+    </div>
+
+    <div id="celebration-overlay"></div>
+    <div id="message-box" class="message-box"></div>
+
+    <script>
+        const HABIT_DURATION_DAYS = 21;
+        const MAX_HABITS = 5;
+        const PREDEFINED_HABITS = [
+            { name: "Floss", icon: "🧵", color: "var(--ios-cyan)" },
+            { name: "Supplement", icon: "💊", color: "var(--ios-orange)" },
+            { name: "Cold Shower", icon: "🧊", color: "var(--ios-teal)" },
+            { name: "Recharge", icon: "⚡", color: "var(--ios-yellow)" },
+            { name: "Eat Clean", icon: "🥗", color: "var(--ios-green)" },
+            { name: "Read", icon: "📚", color: "var(--ios-blue)"},
+            { name: "Meditate", icon: "🧘", color: "var(--ios-purple)"}
+        ];
+
+        let activeHabits = [];
+        let completedHabits = [];
+        let currentView = 'daily-view';
+
+        // --- DOM Elements ---
+        const appTitle = document.getElementById('app-title');
+        const views = {
+            setup: document.getElementById('setup-view'),
+            daily: document.getElementById('daily-view'),
+            edit: document.getElementById('edit-view'),
+            trophy: document.getElementById('trophy-room-view'),
+        };
+        const navItems = document.querySelectorAll('.nav-item');
+        const dailyViewContent = document.getElementById('daily-view-content');
+        const setupForm = document.getElementById('setup-form');
+        const saveSetupButton = document.getElementById('save-setup-button');
+        const editHabitsList = document.getElementById('edit-habits-list');
+        const completedHabitsList = document.getElementById('completed-habits-list');
+        const celebrationOverlay = document.getElementById('celebration-overlay');
+        const messageBox = document.getElementById('message-box');
+        const allHabitsDoneMessage = document.getElementById('all-habits-done-message');
+
+
+        // --- Date & Time (CET) ---
+        function getCurrentCETDate() {
+            // Returns a Date object set to the start of the current day in CET
+            const now = new Date();
+            const cetDateString = now.toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' }); // YYYY-MM-DD
+            return new Date(cetDateString + "T00:00:00Z"); // Treat as UTC for consistency internally after conversion
+        }
+        
+        function getCurrentCETDateTime() {
+             return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            // Make sure to interpret the dateString as CET if it's just YYYY-MM-DD
+            const options = { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Europe/Berlin' };
+            return date.toLocaleDateString('en-GB', options);
+        }
+        
+        function getDayNumberOfHabit(habit, currentCetDate) {
+            const startDate = new Date(habit.startDateCET + "T00:00:00Z"); // Treat as UTC
+            const diffTime = currentCetDate - startDate;
+            if (diffTime < 0) return -1; // Habit hasn't started yet
+            return Math.floor(diffTime / (1000 * 60 * 60 * 24)); // 0-indexed
+        }
+
+
+        // --- Local Storage ---
+        function loadData() {
+            const data = JSON.parse(localStorage.getItem('habitTrackerV2Data'));
+            if (data) {
+                activeHabits = data.activeHabits || [];
+                completedHabits = data.completedHabits || [];
+                // Data migration/validation if needed
+                activeHabits.forEach(h => {
+                    if (!h.progress) h.progress = Array(HABIT_DURATION_DAYS).fill(false);
+                    if (h.progress.length !== HABIT_DURATION_DAYS) h.progress = Array(HABIT_DURATION_DAYS).fill(false);
+                    if (!h.color) { // Assign color if missing (for older data)
+                        const predefined = PREDEFINED_HABITS.find(p => p.icon === h.icon || p.name === h.name);
+                        h.color = predefined ? predefined.color : 'var(--ios-blue)';
+                    }
+                });
+            }
+            const setupComplete = localStorage.getItem('habitTrackerSetupComplete') === 'true';
+            return setupComplete;
+        }
+
+        function saveData() {
+            localStorage.setItem('habitTrackerV2Data', JSON.stringify({ activeHabits, completedHabits }));
+        }
+
+        function markSetupComplete() {
+            localStorage.setItem('habitTrackerSetupComplete', 'true');
+        }
+
+        // --- Habit Logic ---
+        function processDailyHabitStatus() {
+            const todayCET = getCurrentCETDate();
+            const todayCETString = todayCET.toISOString().split('T')[0]; // YYYY-MM-DD
+            let allDoneToday = activeHabits.length > 0; // Assume true if there are habits
+
+            activeHabits.forEach(habit => {
+                const dayNum = getDayNumberOfHabit(habit, todayCET); // 0-indexed day number for today
+
+                if (dayNum < 0) { // Habit starts in the future
+                    allDoneToday = false; // If any habit isn't active today, not all are done
+                    return;
+                }
+
+                // Reset if missed yesterday
+                if (dayNum > 0 && dayNum < HABIT_DURATION_DAYS) {
+                    const yesterdayProgressIndex = dayNum - 1;
+                    if (!habit.progress[yesterdayProgressIndex]) {
+                        // Missed yesterday's check-in
+                        habit.progress = Array(HABIT_DURATION_DAYS).fill(false);
+                        habit.startDateCET = todayCETString; // Restart from today
+                        showMessage(`"${habit.name}" reset due to missed day.`);
+                    }
+                }
+                
+                // Check if today's habit is done
+                if (dayNum < HABIT_DURATION_DAYS) {
+                     if (!habit.progress[dayNum]) {
+                        allDoneToday = false;
+                    }
+                } else { // Habit duration is over, but not yet moved to completed
+                     if (!habit.progress[HABIT_DURATION_DAYS - 1]) { // Check if last day was done
+                        allDoneToday = false;
+                     }
+                }
+            });
+
+            // Move completed habits to trophy room
+            const stillActiveHabits = [];
+            activeHabits.forEach(habit => {
+                const dayNum = getDayNumberOfHabit(habit, todayCET);
+                const completedCount = habit.progress.filter(Boolean).length;
+
+                if (completedCount === HABIT_DURATION_DAYS && dayNum >= HABIT_DURATION_DAYS -1) {
+                    completedHabits.push({ ...habit, completionDate: todayCETString });
+                    showMessage(`"${habit.name}" completed! Moved to Trophy Room.`);
+                } else if (dayNum >= HABIT_DURATION_DAYS) { // Overdue and not completed (e.g. due to reset)
+                     // This case should be handled by reset logic. If it's past 21 days and not full, it should have been reset.
+                     // Or, if it was full and somehow not moved, move it.
+                     // For safety, if it's past duration but not full, treat as still active (will be reset if a day is missed)
+                     stillActiveHabits.push(habit);
+                }
+                else {
+                    stillActiveHabits.push(habit);
+                }
+            });
+            activeHabits = stillActiveHabits;
+
+            if (allDoneToday && activeHabits.length > 0) {
+                allHabitsDoneMessage.style.display = 'block';
+                triggerCelebration();
+            } else {
+                allHabitsDoneMessage.style.display = 'none';
+            }
+
+            saveData();
+        }
+
+        function checkInHabit(habitId) {
+            const habit = activeHabits.find(h => h.id === habitId);
+            if (!habit) return;
+
+            const todayCET = getCurrentCETDate();
+            const dayNum = getDayNumberOfHabit(habit, todayCET); // 0-indexed
+
+            if (dayNum >= 0 && dayNum < HABIT_DURATION_DAYS) {
+                if (!habit.progress[dayNum]) {
+                    habit.progress[dayNum] = true;
+                    habit.lastCheckedInDateCET = todayCET.toISOString().split('T')[0];
+                    saveData();
+                    renderDailyView(); // Re-render to show checked state
+                    checkIfAllHabitsDone();
+                }
+            }
+        }
+        
+        function checkIfAllHabitsDone() {
+            const todayCET = getCurrentCETDate();
+            let allDone = activeHabits.length > 0;
+            activeHabits.forEach(habit => {
+                const dayNum = getDayNumberOfHabit(habit, todayCET);
+                if (dayNum >=0 && dayNum < HABIT_DURATION_DAYS && !habit.progress[dayNum]) {
+                    allDone = false;
+                }
+                 // If a habit's duration is technically over but it's still in activeHabits (e.g. pending move to trophy)
+                // and its last day wasn't checked, it's not "all done today"
+                else if (dayNum >= HABIT_DURATION_DAYS && !habit.progress[HABIT_DURATION_DAYS -1]) {
+                    allDone = false;
+                }
+            });
+
+            if (allDone && activeHabits.length > 0) {
+                allHabitsDoneMessage.style.display = 'block';
+                triggerCelebration();
+            } else {
+                allHabitsDoneMessage.style.display = 'none';
+            }
+        }
+
+
+        // --- Rendering ---
+        function switchView(viewName) {
+            currentView = viewName;
+            Object.values(views).forEach(v => v.classList.remove('active'));
+            navItems.forEach(n => n.classList.remove('active'));
+
+            if (views[viewName]) views[viewName].classList.add('active');
+            const activeNavItem = document.querySelector(`.nav-item[data-view="${viewName}"]`);
+            if (activeNavItem) activeNavItem.classList.add('active');
+
+            // Update header and render specific view content
+            if (viewName === 'daily') { appTitle.textContent = 'Today\'s Habits'; renderDailyView(); }
+            else if (viewName === 'edit') { appTitle.textContent = 'Edit Habits'; renderEditView(); }
+            else if (viewName === 'trophy') { appTitle.textContent = 'Trophy Room'; renderTrophyRoomView(); }
+            else if (viewName === 'setup') { appTitle.textContent = 'Setup Habits'; renderSetupView(); }
+        }
+
+        function renderSetupView() {
+            setupForm.innerHTML = ''; // Clear previous slots
+            for (let i = 0; i < MAX_HABITS; i++) {
+                const slotDiv = document.createElement('div');
+                slotDiv.className = 'setup-habit-slot';
+                slotDiv.innerHTML = `
+                    <label for="setup-name-${i}">Habit ${i + 1} Name:</label>
+                    <input type="text" id="setup-name-${i}" class="ios-input" placeholder="e.g., Read a book">
+                    <label for="setup-icon-${i}">Icon:</label>
+                    <select id="setup-icon-${i}" class="ios-select">
+                        ${PREDEFINED_HABITS.map(p => `<option value="${p.icon}" data-color="${p.color}">${p.icon} ${p.name}</option>`).join('')}
+                    </select>
+                `;
+                setupForm.appendChild(slotDiv);
+            }
+        }
+
+        function renderDailyView() {
+            processDailyHabitStatus(); // Process resets and completions before rendering
+            dailyViewContent.innerHTML = '';
+            const todayCET = getCurrentCETDate();
+
+            if (activeHabits.length === 0) {
+                dailyViewContent.innerHTML = `<p style="text-align:center; color:var(--ios-gray-dark); grid-column: 1 / -1;">No active habits. Go to 'Edit' to add some!</p>`;
+                 allHabitsDoneMessage.style.display = 'none';
+                return;
+            }
+
+            activeHabits.forEach(habit => {
+                const dayNum = getDayNumberOfHabit(habit, todayCET); // 0-indexed
+                const isCheckedToday = (dayNum >= 0 && dayNum < HABIT_DURATION_DAYS) ? habit.progress[dayNum] : false;
+                
+                const button = document.createElement('div');
+                button.className = 'daily-habit-button';
+                button.style.setProperty('--habit-color', habit.color); // For the fill effect
+                if (isCheckedToday) button.classList.add('checked');
+
+                button.innerHTML = `
+                    <span class="icon">${habit.icon}</span>
+                    <span class="name">${habit.name} (Day ${dayNum + 1})</span>
+                `;
+                button.onclick = () => {
+                    if (!isCheckedToday && dayNum >=0 && dayNum < HABIT_DURATION_DAYS) {
+                        checkInHabit(habit.id);
+                    }
+                };
+                dailyViewContent.appendChild(button);
+            });
+            checkIfAllHabitsDone(); // Check again after rendering
+        }
+
+        function renderEditView() {
+            editHabitsList.innerHTML = '';
+            if (activeHabits.length === 0 && PREDEFINED_HABITS.length > 0) {
+                 editHabitsList.innerHTML = `<p class="ios-list-item">No active habits. Add one below!</p>`;
+            }
+
+            activeHabits.forEach((habit, index) => {
+                const item = document.createElement('div');
+                item.className = 'ios-list-item';
+                item.innerHTML = `
+                    <span class="icon">${habit.icon}</span>
+                    <div class="details">
+                        <span class="name">${habit.name}</span>
+                        <span class="progress-text">Started: ${formatDate(habit.startDateCET)}</span>
+                    </div>
+                    <button class="ios-button red" style="padding: 5px 10px; font-size: 0.8em; margin:0;" onclick="confirmRemoveHabit(${habit.id})">Remove</button>
+                `;
+                // TODO: Add edit functionality (change name/icon)
+                // TODO: Add reset progress functionality
+                editHabitsList.appendChild(item);
+            });
+
+            // Add New Habit section
+            if (activeHabits.length < MAX_HABITS) {
+                const addItem = document.createElement('div');
+                addItem.className = 'ios-list-item';
+                addItem.style.flexDirection = 'column';
+                addItem.style.alignItems = 'stretch';
+                addItem.innerHTML = `
+                    <h3 style="font-size:1em; margin-bottom:10px; text-align:center;">Add New Habit</h3>
+                    <input type="text" id="new-habit-name" class="ios-input" placeholder="New habit name">
+                    <select id="new-habit-icon" class="ios-select">
+                        ${PREDEFINED_HABITS.map(p => `<option value="${p.icon}" data-color="${p.color}">${p.icon} ${p.name}</option>`).join('')}
+                    </select>
+                    <button class="ios-button green" onclick="addNewHabitFromEditScreen()">Add Habit</button>
+                `;
+                editHabitsList.appendChild(addItem);
+            } else {
+                 editHabitsList.innerHTML += `<p class="ios-list-item" style="justify-content:center; color:var(--ios-gray-dark);">Habit limit reached.</p>`;
+            }
+        }
+        
+        function confirmRemoveHabit(habitId) {
+            if (confirm("Are you sure you want to remove this habit? This cannot be undone.")) {
+                activeHabits = activeHabits.filter(h => h.id !== habitId);
+                saveData();
+                renderEditView();
+                renderDailyView(); // Update daily view as well
+                showMessage("Habit removed.");
+            }
+        }
+
+        function addNewHabitFromEditScreen() {
+            if (activeHabits.length >= MAX_HABITS) {
+                showMessage("Maximum 5 habits allowed.");
+                return;
+            }
+            const nameInput = document.getElementById('new-habit-name');
+            const iconSelect = document.getElementById('new-habit-icon');
+            const name = nameInput.value.trim();
+            const icon = iconSelect.value;
+            const selectedOption = iconSelect.options[iconSelect.selectedIndex];
+            const color = selectedOption.dataset.color;
+
+            if (!name) {
+                showMessage("Please enter a habit name.");
+                return;
+            }
+
+            const newHabit = {
+                id: Date.now(),
+                name: name,
+                icon: icon,
+                color: color,
+                startDateCET: getCurrentCETDate().toISOString().split('T')[0],
+                progress: Array(HABIT_DURATION_DAYS).fill(false),
+                lastCheckedInDateCET: null
+            };
+            activeHabits.push(newHabit);
+            saveData();
+            renderEditView(); // Re-render edit screen
+            renderDailyView(); // Re-render daily screen
+            showMessage(`"${name}" habit added!`);
+            nameInput.value = ''; // Clear input
+        }
+
+
+        function renderTrophyRoomView() {
+            completedHabitsList.innerHTML = '';
+            if (completedHabits.length === 0) {
+                completedHabitsList.innerHTML = `<p style="text-align:center; color:var(--ios-gray-dark);">No habits completed yet. Keep going!</p>`;
+                return;
+            }
+            completedHabits.sort((a,b) => new Date(b.completionDate) - new Date(a.completionDate)); // Newest first
+            completedHabits.forEach(habit => {
+                const item = document.createElement('div');
+                item.className = 'trophy-item';
+                item.innerHTML = `
+                    <span class="icon">${habit.icon}</span>
+                    <div>
+                        <p class="name">${habit.name}</p>
+                        <p class="date">Completed on: ${formatDate(habit.completionDate)}</p>
+                    </div>
+                `;
+                completedHabitsList.appendChild(item);
+            });
+        }
+
+        // --- UI Helpers ---
+        function showMessage(text, duration = 3000) {
+            messageBox.textContent = text;
+            messageBox.classList.add('show');
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, duration);
+        }
+
+        function triggerCelebration() {
+            celebrationOverlay.style.display = 'flex';
+            celebrationOverlay.innerHTML = ''; // Clear previous confetti
+
+            for (let i = 0; i < 50; i++) { // Create 50 confetti pieces
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                // Randomize confetti color slightly
+                const colors = [PREDEFINED_HABITS.map(p => p.color.replace('var(','').replace(')',''))].flat();
+                const randomColorVar = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.backgroundColor = `var(${randomColorVar})`;
+                confetti.style.width = (Math.random() * 5 + 5) + 'px'; // Random width
+                confetti.style.height = (Math.random() * 10 + 10) + 'px'; // Random height
+                celebrationOverlay.appendChild(confetti);
+            }
+
+            setTimeout(() => {
+                celebrationOverlay.style.display = 'none';
+            }, 3000); // Duration of the celebration
+        }
+
+        // --- Event Listeners ---
+        navItems.forEach(item => {
+            item.addEventListener('click', () => switchView(item.dataset.view));
+        });
+
+        saveSetupButton.addEventListener('click', () => {
+            const chosenHabits = [];
+            for (let i = 0; i < MAX_HABITS; i++) {
+                const nameInput = document.getElementById(`setup-name-${i}`);
+                const iconSelect = document.getElementById(`setup-icon-${i}`);
+                const name = nameInput.value.trim();
+                const icon = iconSelect.value;
+                const selectedOption = iconSelect.options[iconSelect.selectedIndex];
+                const color = selectedOption.dataset.color;
+
+                if (name && icon) {
+                    chosenHabits.push({
+                        id: Date.now() + i, // Ensure unique IDs
+                        name: name,
+                        icon: icon,
+                        color: color,
+                        startDateCET: getCurrentCETDate().toISOString().split('T')[0],
+                        progress: Array(HABIT_DURATION_DAYS).fill(false),
+                        lastCheckedInDateCET: null
+                    });
+                }
+            }
+            if (chosenHabits.length === 0) {
+                showMessage("Please set up at least one habit.");
+                return;
+            }
+            activeHabits = chosenHabits;
+            saveData();
+            markSetupComplete();
+            switchView('daily'); // Go to daily view after setup
+            showMessage("Habits saved! Let's get started.");
+        });
+
+        // --- Initialization ---
+        function init() {
+            const setupComplete = loadData();
+            if (!setupComplete) {
+                switchView('setup');
+            } else {
+                switchView('daily'); // Default view
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
